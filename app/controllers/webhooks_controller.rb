@@ -9,7 +9,7 @@ class WebhooksController < ApplicationController
     event = Stripe::Webhook.construct_event(payload, sig_header, endpoint_secret)
     if event["type"] == "payment_intent.succeeded"
       intent = event["data"]["object"]
-      booking = Booking.find_by(payment_intent_id: intent.id)
+      booking = Booking.find_by(payment_intent_id: intent["id"])
       if booking
         booking.update!(status: :confirmed)
         BookingConfirmationJob.perform_later(booking.id)

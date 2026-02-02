@@ -7,6 +7,10 @@ class BookingConfirmationJob < ApplicationJob
 
   def perform(booking_id)
     booking = Booking.find_by(id: booking_id)
+    if booking.nil?
+      Rails.logger.error "Booking not found with ID: #{booking_id}"
+      return
+    end
 
     if booking && booking.status == "confirmed"
       BookingMailer.confirmation_email(booking).deliver_now
