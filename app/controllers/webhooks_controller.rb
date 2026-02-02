@@ -7,11 +7,13 @@ class WebhooksController < ApplicationController
     endpoint_secret = Rails.application.credentials.dig(:stripe, :webhook_secret)
 
     event = Stripe::Webhook.construct_event(payload, sig_header, endpoint_secret)
-
     if event["type"] == "payment_intent.succeeded"
       intent = event["data"]["object"]
       booking = Booking.find_by(payment_intent_id: intent.id)
-      booking.update!(status: :confirmed) if booking
+      if booking
+        booking.update!(status: :confirmed)
+        BookingConfirmationJob.perform_later(booking.id)
+      end
     end
     render json: { message: "success" }, status: :ok
   rescue JSON::ParserError, Stripe::SignatureVerificationError => e

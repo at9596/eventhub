@@ -48,6 +48,7 @@ group :development, :test do
   # Omakase Ruby styling [https://github.com/rails/rubocop-rails-omakase/]
   gem "rubocop-rails-omakase", require: false
 end
+gem "letter_opener", "~> 1.8", group: :development
 
 gem "strong_migrations", "~> 2.5"
 
