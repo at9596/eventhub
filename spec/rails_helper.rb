@@ -10,6 +10,7 @@ require 'webmock/rspec'
 require 'pundit/rspec'
 # Ensure WebMock doesn't block local connections (like your DB)
 WebMock.disable_net_connect!(allow_localhost: true)
+Rails.root.glob('spec/support/**/*.rb').sort.each { |f| require f }
 
 begin
   ActiveRecord::Migration.maintain_test_schema!
@@ -58,6 +59,7 @@ RSpec.configure do |config|
   #     end
   #
   # The different available types are documented in the features, such as in
+  config.include AuthHelpers, type: :request
   # https://rspec.info/features/6-0/rspec-rails
   config.infer_spec_type_from_file_location!
 
