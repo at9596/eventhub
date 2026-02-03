@@ -13,13 +13,15 @@ RSpec.describe ApplicationController, type: :controller do
   end
 
   let(:user) { create(:user) }
-  # Assuming you have a JsonWebToken service to encode tokens
   let(:token) { JsonWebToken.encode(user_id: user.id) }
 
   describe "authorize_request" do
-    context "when a valid token is provided" do
+    context "when a valid token is provided in a signed cookie" do
       before do
-        request.headers["Authorization"] = "Bearer #{token}"
+        # In controller specs, we can set the signed cookie directly
+        request.cookies[:jwt] = ActionDispatch::Cookies::CookieJar.build(request, {}).tap { |dist|
+          dist.signed[:jwt] = token
+        }[:jwt]
       end
 
       it "sets the current_user and allows the request" do
@@ -31,7 +33,8 @@ RSpec.describe ApplicationController, type: :controller do
 
     context "when an invalid token is provided" do
       before do
-        request.headers["Authorization"] = "Bearer invalid_token"
+        # Setting a cookie that isn't signed correctly or has invalid data
+        request.cookies[:jwt] = "invalid_signed_token_string"
       end
 
       it "returns an unauthorized status" do
@@ -45,14 +48,17 @@ RSpec.describe ApplicationController, type: :controller do
       it "returns an unauthorized status" do
         get :index
         expect(response).to have_http_status(:unauthorized)
+        expect(JSON.parse(response.body)["errors"]).to eq("Missing token")
       end
     end
   end
 
   describe "Pundit Authorization" do
     before do
-      # Mocking valid authorization to reach the action
-      request.headers["Authorization"] = "Bearer #{token}"
+      # Provide a valid signed cookie to pass the authorize_request filter
+      request.cookies[:jwt] = ActionDispatch::Cookies::CookieJar.build(request, {}).tap { |dist|
+        dist.signed[:jwt] = token
+      }[:jwt]
     end
 
     it "rescues from Pundit::NotAuthorizedError" do

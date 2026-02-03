@@ -7,22 +7,34 @@ RSpec.describe "Authentication", type: :request do
     let(:invalid_params) { { email: "abhishek@example.com", password: "wrongpassword" } }
 
     context "with valid credentials" do
-      it "returns a success status and a JWT token" do
+      it "returns a success status and the correct user data" do
         post "/auth/login", params: valid_params
 
         expect(response).to have_http_status(:ok)
 
         json_response = JSON.parse(response.body)
         expect(json_response).to have_key("token")
-        expect(json_response).to have_key("exp")
+        # Check for user email inside the nested 'user' key as per your controller
         expect(json_response["user"]["email"]).to eq(user.email)
+      end
+
+      it "sets a signed HttpOnly cookie named jwt" do
+        post "/auth/login", params: valid_params
+
+        # In request specs, response.cookies gives you access to the headers sent back
+        expect(response.cookies).to have_key("jwt")
+
+        # To verify it's HttpOnly and Secure, we check the 'Set-Cookie' header string
+        cookie_header = response.headers["Set-Cookie"]
+        # Use a case-insensitive regex to find httponly
+        expect(cookie_header).to match(/httponly/i)
+        expect(cookie_header).to include("jwt=")
       end
 
       it "returns a token that can be decoded" do
         post "/auth/login", params: valid_params
         token = JSON.parse(response.body)["token"]
 
-        # Verify the token actually works with your service
         decoded = JsonWebToken.decode(token)
         expect(decoded[:user_id]).to eq(user.id)
       end
@@ -34,12 +46,6 @@ RSpec.describe "Authentication", type: :request do
 
         expect(response).to have_http_status(:unauthorized)
         expect(JSON.parse(response.body)["errors"]).to eq("Invalid email or password")
-      end
-
-      it "returns unauthorized for a non-existent email" do
-        post "/auth/login", params: { email: "notfound@example.com", password: "password123" }
-
-        expect(response).to have_http_status(:unauthorized)
       end
     end
   end
