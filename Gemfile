@@ -63,4 +63,4 @@ gem "jwt", "~> 3.1"
 
 gem "pundit", "~> 2.5"
 
-gem "stripe", "~> 18.3"
+gem "stripe", "~> 18.4"
