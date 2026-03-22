@@ -42,7 +42,7 @@ group :development, :test do
   gem "faker", "~> 2.0"
   gem "database_cleaner-active_record", "~> 2.0"
   gem "shoulda-matchers", "~> 6.0"
-  gem "webmock", "~> 3.0"
+  gem "webmock", "~> 3.26"
   # See https://guides.rubyonrails.org/debugging_rails_applications.html#debugging-with-the-debug-gem
   gem "debug", platforms: %i[ mri windows ], require: "debug/prelude"
 
